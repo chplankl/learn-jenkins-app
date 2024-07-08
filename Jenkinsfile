@@ -78,7 +78,7 @@ pipeline {
                         }
                     }
                 }
-                /*stage('E2E') {
+                stage('E2E') {
                     agent {
                         docker {
                             image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
@@ -90,7 +90,7 @@ pipeline {
                             npm install serve 
                             node_modules/.bin/serve -s build &
                             sleep 30
-                                npx playwright test --reporter=html
+                            npx playwright test --reporter=html
                             '''
                     }
                      post {
@@ -98,7 +98,7 @@ pipeline {
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'HTML Report', reportTitles: '', useWrapperFileDirectly: true])
                         }
                     }
-                }   */
+                }   
             }
         }
         stage('Deploy') {
@@ -117,7 +117,29 @@ pipeline {
                      node_modules/.bin/netlify deploy  --dir=build --prod
                 '''
             }
-        } 
+        }
+         stage('Prod E2E') {
+                    agent {
+                        docker {
+                            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                            reuseNode true
+                        }
+                    }
+                    environment {
+                        CI_ENVIRONMENT_URL = 'https://lucky-panda-0c912e.netlify.app'
+                    }
+                    steps {
+                        sh '''
+                            
+                            npx playwright test --reporter=html
+                            '''
+                    }
+                     post {
+                        always {
+                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Prod HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+                        }
+                    }
+                }    
     }
    
 }
