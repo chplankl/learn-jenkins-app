@@ -101,7 +101,24 @@ pipeline {
                 }   
             }
         }
-        stage('Deploy') {
+        stage('Deploy Stageing') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    reuseNode true
+                }
+            }
+            steps {
+                sh '''
+                    npm install netlify-cli
+                    node_modules/.bin/netlify --version 
+                    echo "Deploying to stging. Site ID: $NETLIFY_SITE_ID"
+                    node_modules/.bin/netlify status
+                     node_modules/.bin/netlify deploy  --dir=build
+                '''
+            }
+        } 
+        stage('Deploy Prod') {
             agent {
                 docker {
                     image 'node:18-alpine'
@@ -119,27 +136,26 @@ pipeline {
             }
         }
          stage('Prod E2E') {
-                    agent {
-                        docker {
-                            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
-                            reuseNode true
-                        }
-                    }
-                    environment {
-                        CI_ENVIRONMENT_URL = 'https://lucky-panda-0c912e.netlify.app'
-                    }
-                    steps {
-                        sh '''
-                            
-                            npx playwright test --reporter=html
-                            '''
-                    }
-                     post {
-                        always {
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Prod HTML Report', reportTitles: '', useWrapperFileDirectly: true])
-                        }
-                    }
-                }    
-    }
-   
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                    reuseNode true
+                }
+            }
+            environment {
+                CI_ENVIRONMENT_URL = 'https://lucky-panda-0c912e.netlify.app'
+            }
+            steps {
+                sh '''
+                    
+                    npx playwright test --reporter=html
+                    '''
+            }
+            post {
+                always {
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Prod HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+                }
+            }
+        }    
+    }  
 }
