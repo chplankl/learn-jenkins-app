@@ -38,7 +38,7 @@ pipeline {
                     echo "Deploying to stging. Site ID: $NETLIFY_SITE_ID"
                     node_modules/.bin/netlify status
                     node_modules/.bin/netlify deploy  --dir=build --json > deploy-output.json 
-                    node_modules/.bin/node-jq -r '.deploy_url' depoy-output.json
+                    node_modules/.bin/node-jq -r '.deploy_url' deploy-output.json
                 '''
             }
         }
